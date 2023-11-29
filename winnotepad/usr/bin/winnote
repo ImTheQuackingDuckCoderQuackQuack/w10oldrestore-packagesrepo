@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gio
+
+class SimpleTextEditor(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title="Notepad")
+
+        self.textview = Gtk.TextView()
+        self.textbuffer = self.textview.get_buffer()
+
+        menubar = Gtk.MenuBar()
+
+        file_menu = Gtk.Menu()
+        file_menu_button = Gtk.MenuItem(label="File")
+        file_menu_button.set_submenu(file_menu)
+
+        open_item = Gtk.MenuItem(label="Open")
+        open_item.connect("activate", self.on_open_clicked)
+        file_menu.append(open_item)
+
+        save_item = Gtk.MenuItem(label="Save")
+        save_item.connect("activate", self.on_save_clicked)
+        file_menu.append(save_item)
+
+        exit_item = Gtk.MenuItem(label="Quit")
+        exit_item.connect("activate", Gtk.main_quit)
+        file_menu.append(exit_item)
+
+        menubar.append(file_menu_button)
+
+        about_item = Gtk.MenuItem(label="About")
+        about_item.connect("activate", self.on_about_clicked)
+        menubar.append(about_item)
+
+        vbox = Gtk.VBox()
+        vbox.pack_start(menubar, False, False, 0)
+        vbox.pack_start(self.textview, True, True, 0)
+
+        self.add(vbox)
+
+        self.set_default_size(600, 400)
+
+    def on_open_clicked(self, widget):
+        dialog = Gtk.FileChooserDialog("Open File", self, Gtk.FileChooserAction.OPEN,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            file_path = dialog.get_filename()
+            self.load_file(file_path)
+
+        dialog.destroy()
+
+    def on_save_clicked(self, widget):
+        dialog = Gtk.FileChooserDialog("Save File", self, Gtk.FileChooserAction.SAVE,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                        Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
+
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            file_path = dialog.get_filename()
+            self.save_file(file_path)
+
+        dialog.destroy()
+
+    def load_file(self, file_path):
+        with open(file_path, "r") as file:
+            text = file.read()
+            self.textbuffer.set_text(text)
+
+    def save_file(self, file_path):
+        start_iter = self.textbuffer.get_start_iter()
+        end_iter = self.textbuffer.get_end_iter()
+        text = self.textbuffer.get_text(start_iter, end_iter, True)
+
+        with open(file_path, "w") as file:
+            file.write(text)
+
+    def on_about_clicked(self, widget):
+        about_dialog = Gtk.AboutDialog()
+
+        about_dialog.set_program_name("Notepad")
+        about_dialog.set_version("Running on Windows 10 OldRestore version 21H1 build L877552214")
+        about_dialog.set_comments("Notepad, for Windows 10 OldRestore, is free, convenient and quick to use.")
+        about_dialog.set_authors(["Win10OLDRESTORE .INC"])
+        about_dialog.set_website("https://www.sites.google.com/view/win10-oldrestore/def__homepage/")
+
+        about_dialog.run()
+        about_dialog.destroy()
+
+if __name__ == "__main__":
+    win = SimpleTextEditor()
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
