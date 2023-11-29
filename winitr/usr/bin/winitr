@@ -1,0 +1,5 @@
+winitr-start
+if wininitr-error = true:
+wininitr-stop
+else:
+# do nothing;
