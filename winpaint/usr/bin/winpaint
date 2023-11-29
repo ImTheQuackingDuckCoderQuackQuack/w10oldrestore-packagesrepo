@@ -1,0 +1,77 @@
+#!/usr/bin/python3
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk
+
+class PaintApp(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title="Paint")
+        self.set_default_size(800, 600)
+
+        self.drawing_area = Gtk.DrawingArea()
+        self.drawing_area.connect("draw", self.on_draw)
+        self.add(self.drawing_area)
+
+        self.drawing_tool = Gdk.pixbuf_new(Gdk.COLORSPACE_RGB, False, 8, 800, 600)
+        self.drawing_tool.fill(0xFFFFFFFF)
+
+        self.drawing_area.connect("motion-notify-event", self.on_motion)
+        self.drawing_area.connect("button-press-event", self.on_button_press)
+        self.drawing_area.connect("configure-event", self.on_configure_event)
+
+        menu_bar = Gtk.MenuBar()
+
+        file_menu = Gtk.Menu()
+        file_menu_item = Gtk.MenuItem(label="Файл")
+        file_menu_item.set_submenu(file_menu)
+
+        about_item = Gtk.MenuItem(label="About")
+        about_item.connect("activate", self.on_about_clicked)
+        file_menu.append(about_item)
+
+        menu_bar.append(file_menu_item)
+
+        vbox = Gtk.VBox()
+        vbox.pack_start(menu_bar, False, False, 0)
+        vbox.pack_start(self.drawing_area, True, True, 0)
+        self.add(vbox)
+
+        self.show_all()
+
+    def on_about_clicked(self, widget):
+        about_dialog = Gtk.AboutDialog()
+        about_dialog.set_program_name("Paint")
+        about_dialog.set_version("1.0")
+        about_dialog.set_authors(["Win10OLDRESTORE .INC"])
+        about_dialog.set_license_text("Runs on Windows 10 OldRestore.")
+        about_dialog.run()
+        about_dialog.destroy()
+
+    def on_configure_event(self, widget, event):
+        _, _, width, height = widget.get_allocation()
+        self.drawing_tool = Gdk.pixbuf_new(Gdk.COLORSPACE_RGB, False, 8, width, height)
+        self.drawing_tool.fill(0xFFFFFFFF)
+
+    def on_draw(self, widget, cr):
+        Gdk.cairo_set_source_pixbuf(cr, self.drawing_tool, 0, 0)
+        cr.paint()
+
+    def on_button_press(self, widget, event):
+        if event.button == 1:
+            self.draw(event)
+
+    def on_motion(self, widget, event):
+        if event.state & Gdk.EventMask.BUTTON_PRESS_MASK:
+            self.draw(event)
+
+    def draw(self, event):
+        x, y = int(event.x), int(event.y)
+        Gdk.cairo_set_source_pixbuf(self.drawing_tool, self.drawing_tool, 0, 0)
+        self.drawing_tool.get_pixels().put_pixel(x, y, 0x000000FF)
+        self.queue_draw()
+
+if __name__ == "__main__":
+    app = PaintApp()
+    app.connect("destroy", Gtk.main_quit)
+    Gtk.main()
